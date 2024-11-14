@@ -1,7 +1,10 @@
 package net.toregard.mongodbtest.domains
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.flipkart.zjsonpatch.JsonDiff
 import org.bson.Document
+import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import reactor.core.publisher.Flux
@@ -14,6 +17,8 @@ class GenericController(
     private val schemaValidationService: SchemaValidationService
 ) {
 
+    private val logger = LoggerFactory.getLogger(GenericController::class.java)
+    private val objectMapper = ObjectMapper()
 
     // Method to retrieve the schema for a collection
     private fun getSchemaForCollection(collectionName: String): String {
@@ -35,12 +40,12 @@ class GenericController(
         """
     }
 
-    @PostMapping("/{id}")
+    @PutMapping("/{id}")
     fun createOrUpdate(
         @PathVariable collectionName: String,
         @PathVariable id: String,
         @RequestBody document: Map<String, Any>
-    ): Mono<out ResponseEntity<out Map<String, Any>>> {
+    ): Mono<ResponseEntity<Any>> {
         val schemaJson = getSchemaForCollection(collectionName)
         val errors = schemaValidationService.validate(document, schemaJson)
         if (errors.isNotEmpty()) {
@@ -52,24 +57,33 @@ class GenericController(
         return repository.findById(collectionName, id)
             .flatMap { existingDoc ->
                 // Existing document found, compute and log the diff
-                val diff = ComputeDiff.computeDiff(existingDoc, doc)
+                val diff = computeDiff(existingDoc, doc)
                 logDiff(id, diff)
                 // Update the document
                 repository.save(collectionName, doc)
-                    .map { ResponseEntity.ok(it) }
+                    .map { ResponseEntity.ok(it as Any) }
             }
             .switchIfEmpty(
                 // Document does not exist, create new one
                 repository.save(collectionName, doc)
-                    .map { ResponseEntity.ok(it) }
+                    .map { ResponseEntity.ok(it as Any) }
             )
     }
 
-    fun logDiff(id: String, diff: JsonNode) {
-        // You can use your preferred logging framework; here we use println for simplicity
-        println("Differences for document with id '$id': $diff")
+    private fun computeDiff(existingDoc: Document, newDoc: Document): JsonNode {
+        return try {
+            val existingJsonNode = objectMapper.readTree(existingDoc.toJson())
+            val newJsonNode = objectMapper.readTree(newDoc.toJson())
+            JsonDiff.asJson(existingJsonNode, newJsonNode)
+        } catch (e: Exception) {
+            logger.error("Error computing diff: ${e.message}")
+            objectMapper.createObjectNode()
+        }
     }
 
+    private fun logDiff(id: String, diff: JsonNode) {
+        logger.info("Differences for document with id '$id': $diff")
+    }
 
     @GetMapping("/{id}")
     fun getById(
@@ -84,17 +98,6 @@ class GenericController(
     fun getAll(@PathVariable collectionName: String): Flux<Document> =
         repository.findAll(collectionName)
 
-    @PutMapping("/{id}")
-    fun update(
-        @PathVariable collectionName: String,
-        @PathVariable id: String,
-        @RequestBody document: Map<String, Any>
-    ): Mono<ResponseEntity<Document>> {
-        val doc = Document(document).append("_id", id)
-        return repository.save(collectionName, doc)
-            .map { ResponseEntity.ok(it) }
-    }
-
     @DeleteMapping("/{id}")
     fun delete(
         @PathVariable collectionName: String,
@@ -103,4 +106,3 @@ class GenericController(
         repository.deleteById(collectionName, id)
             .then(Mono.just(ResponseEntity.noContent().build()))
 }
-
