@@ -8,7 +8,7 @@ docker run --name mongodb -d -p 27017:27017 -v $(pwd)/data:/data/db mongodb/mong
 ```
 
 ## POC shows
-- crud operation where post creat and update in same methode
+- Generic crud operation where post creat and update in same methode. Validate against json schema
 - diff is logged if update. Example differences for document with id '1012_15-11-25':
 ```json
  [{"op":"replace","path":"/lastName","value":"HelloA"},{"op":"replace","path":"/age","value":29}]
