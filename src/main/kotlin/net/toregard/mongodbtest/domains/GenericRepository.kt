@@ -10,6 +10,12 @@ import org.springframework.stereotype.Repository
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.Criteria
 
+/**
+ * GenericRepository provides methods to interact with MongoDB collections in a generic way using a dynamic
+ * collection name. This repository uses a ReactiveMongoTemplate for non-blocking database operations.
+ *
+ * @param mongoTemplate The Spring ReactiveMongoTemplate used for performing database operations.
+ */
 @Repository
 class GenericRepository(private val mongoTemplate: ReactiveMongoTemplate) {
 

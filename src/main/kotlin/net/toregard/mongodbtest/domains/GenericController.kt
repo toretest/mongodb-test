@@ -10,11 +10,10 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
 /**
- * This code is so general at it can be use for all collection and crud operation.
- * Bringing a schema as an input can extend the functionality to also validate on the schema
+ * GenericController provides RESTful API endpoints for CRUD operations on dynamically named collections.
  *
- * Notice that the code use reactive programming and coroutines to handle the async operations.
- * Async mongodb is active here-  Flux/mono is replaced with coroutine..but it does the same
+ * @param repository The repository handling database operations.
+ * @param schemaValidationService Service to validate documents against JSON schemas.
  */
 @RestController
 @RequestMapping("/api/{collectionName}")
@@ -26,7 +25,13 @@ class GenericController(
     private val logger = LoggerFactory.getLogger(GenericController::class.java)
     private val objectMapper = ObjectMapper()
 
-    // Method to retrieve the schema for a collection
+    /**
+     * Retrieves the schema for a specific collection.
+     *
+     * @param collectionName The name of the collection for which the schema is to be retrieved.
+     * @return The JSON schema as a string for the given collection.
+     */
+// Method to retrieve the schema for a collection
     private fun getSchemaForCollection(collectionName: String): String {
         // Retrieve the schema from your storage (database, file, etc.)
         return """

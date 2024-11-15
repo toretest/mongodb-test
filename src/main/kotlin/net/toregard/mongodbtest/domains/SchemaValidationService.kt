@@ -5,6 +5,11 @@ import com.networknt.schema.SpecVersion
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.stereotype.Service
 
+/**
+ * Service to validate JSON documents against provided JSON schemas.
+ *
+ * @param objectMapper Jackson ObjectMapper to convert documents to JSON nodes for validation.
+ */
 @Service
 class SchemaValidationService(private val objectMapper: ObjectMapper) {
 
