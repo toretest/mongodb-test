@@ -1,24 +1,35 @@
 package net.toregard.mongodbtest.domains
 
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.reactive.asFlow
+import kotlinx.coroutines.reactive.awaitFirst
+import kotlinx.coroutines.reactive.awaitFirstOrNull
 import org.bson.Document
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate
 import org.springframework.stereotype.Repository
-import reactor.core.publisher.Flux
-import reactor.core.publisher.Mono
+import org.springframework.data.mongodb.core.query.Query
+import org.springframework.data.mongodb.core.query.Criteria
 
 @Repository
 class GenericRepository(private val mongoTemplate: ReactiveMongoTemplate) {
 
-    fun save(collectionName: String, document: Document): Mono<Document> =
-        mongoTemplate.save(document, collectionName)
+    suspend fun save(collectionName: String, document: Document): Document =
+        mongoTemplate.save(document, collectionName).awaitFirst()
 
-    fun findById(collectionName: String, id: String): Mono<Document> =
-        mongoTemplate.findById(id, Document::class.java, collectionName)
+    suspend fun findById(collectionName: String, id: String): Document? =
+        mongoTemplate.findById(id, Document::class.java, collectionName).awaitFirstOrNull()
 
-    fun findAll(collectionName: String): Flux<Document> =
-        mongoTemplate.findAll(Document::class.java, collectionName)
+    /**
+     * Stream with flow
+     */
+    fun findAll(collectionName: String): Flow<Document> =
+        mongoTemplate.findAll(Document::class.java, collectionName).asFlow()
 
-    fun deleteById(collectionName: String, id: String): Mono<Void> =
-        mongoTemplate.remove(Document("_id", id), collectionName).then()
+    suspend fun deleteById(collectionName: String, id: String) {
+        mongoTemplate.remove(
+            Query.query(Criteria.where("_id").`is`(id)),
+            collectionName
+        ).awaitFirstOrNull()
+    }
 }
 
