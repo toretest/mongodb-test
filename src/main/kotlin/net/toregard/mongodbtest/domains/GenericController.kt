@@ -45,7 +45,7 @@ class GenericController(
         """
     }
 
-    @PutMapping("/{id}")
+    @PostMapping("/{id}")
     suspend fun createOrUpdate(
         @PathVariable collectionName: String,
         @PathVariable id: String,

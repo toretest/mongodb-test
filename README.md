@@ -9,10 +9,14 @@ docker run --name mongodb -d -p 27017:27017 -v $(pwd)/data:/data/db mongodb/mong
 
 ## POC shows
 - crud operation where post creat and update in same methode
-- diff is logged if update
+- diff is logged if update. Example differences for document with id '1012_15-11-25':
+```json
+ [{"op":"replace","path":"/lastName","value":"HelloA"},{"op":"replace","path":"/age","value":29}]
+```
+
 - reactive mongo db
 - schema validation
-- using couroutine with reactive mongo db, and list is corroutine fow that is simpler to code than Flux and Mongo
+- using coroutine with reactive mongo db, and coroutine simply code than Flux and Mongo
 
 
 ## How Coroutines Work with Asynchronous MongoDB
